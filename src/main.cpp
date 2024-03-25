@@ -3,7 +3,7 @@
 #include <freertos/task.h>
 
 #include "config/led_config.ccp"
-#include "config/can_config.h"
+#include "config/can_sniffer.h"
 #include "config/serial_config.h"
 
 extern "C" void app_main() 
@@ -12,7 +12,7 @@ extern "C" void app_main()
     printf( "Start CAN Hacker\n" );
 
     BLINK_INIT();
-    //CAN_INIT();
+    CAN_SNIFFER_INIT();
     SERIAL_INIT();
 
     SET_LED_STATE( LED_Blink );

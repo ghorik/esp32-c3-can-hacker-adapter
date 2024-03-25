@@ -1,9 +1,9 @@
 
 #include "config/can_config.h"
+#include "config/can_sniffer.h"
 #include <string.h>
 
 static CAN_INTERFACE::STATE_Enum can_state = CAN_INTERFACE::STATE_RESET;
-//static CAN_INTERFACE::MODE_Enum can_mode = CAN_INTERFACE::MODE_READ_WRITE;
 static CAN_INTERFACE::SPEED_Enum can_speed = CAN_INTERFACE::SPEED_10Kbps;
 static CAN_INTERFACE::MODE_TIMESTAMP_Enum can_timestamp = CAN_INTERFACE::MODE_TIMESTAMP_DISABLE;
 
@@ -35,6 +35,7 @@ esp_err_t CAN_INTERFACE::RESET_CAN( void )
     {
         return ESP_FAIL; 
     }
+    CAN_SNIFFER_STOP();
     return ESP_OK;
 }
 
@@ -104,6 +105,7 @@ esp_err_t CAN_INTERFACE::CAN_OPEN( const MODE_Enum mode )
     } 
 
 
+    CAN_SNIFFER_START();
     can_state = STATE_OPENED;
     return ESP_OK;
 }
