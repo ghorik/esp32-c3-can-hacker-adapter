@@ -1,0 +1,11 @@
+# ninja log v5
+0	5431233	0	CMakeFiles/confserver	5849381f85206366
+0	5431233	0	D:/Arduino/ESP-C3/build/CMakeFiles/confserver	5849381f85206366
+3	4719	7326319160493777	build.ninja	76be68e1061f49f5
+3	4664	7326319160493777	build.ninja	76be68e1061f49f5
+0	192	0	CMakeFiles/save-defconfig	d16e46be1fc3cd84
+0	192	0	D:/Arduino/ESP-C3/build/CMakeFiles/save-defconfig	d16e46be1fc3cd84
+0	2254271	0	CMakeFiles/confserver	5849381f85206366
+0	2254271	0	D:/Arduino/ESP-C3/build/CMakeFiles/confserver	5849381f85206366
+0	19022017	0	CMakeFiles/confserver	5849381f85206366
+0	19022017	0	D:/Arduino/ESP-C3/build/CMakeFiles/confserver	5849381f85206366
