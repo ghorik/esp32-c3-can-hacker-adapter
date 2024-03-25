@@ -1,6 +1,7 @@
 
 #include "config/can_sniffer.h"
 
+static bool can_timestamp = false;
 static TaskHandle_t TaskHandle_CAN_SNIFFER = NULL;
 
 static void vTask_CAN_SNIFFER( void* pvParameters );
@@ -8,6 +9,7 @@ static void PDO_TO_SERIAL( const twai_message_t* message );
 static void APPEND_STD_ID_TO_BUFFER( int value, char* buffer );
 static void APPEND_EXT_ID_TO_BUFFER( int value, char* buffer );
 static void APPEND_DATA_TO_BUFFER( uint8_t data, char* buffer );
+static void APPEND_TIMESTAMP_TO_BUFFER( char* buffer );
 static char NIBBLE_TO_HEX( uint8_t nibble );
 
 void CAN_SNIFFER_INIT( void )
@@ -31,6 +33,11 @@ void CAN_SNIFFER_START( void )
 void CAN_SNIFFER_STOP( void )
 {
     vTaskSuspend( TaskHandle_CAN_SNIFFER );
+}
+
+void SET_CAN_SNIFFER_TIMESTAMP_STATE( bool state )
+{
+    can_timestamp = state;
 }
 
 void vTask_CAN_SNIFFER( void* pvParameters )
@@ -90,6 +97,12 @@ void PDO_TO_SERIAL( const twai_message_t* message )
         len_buffer += 2;
     }
 
+    if (  can_timestamp )
+    {
+        APPEND_TIMESTAMP_TO_BUFFER( &buffer[ len_buffer ] );
+        len_buffer += 4;
+    }
+
     buffer[ len_buffer ] = '\r';
     len_buffer++;
 
@@ -117,6 +130,16 @@ void APPEND_DATA_TO_BUFFER( uint8_t data, char* buffer )
     for ( int i = 0; i < 2; i++ )
     {
         buffer[ 1 - i ] = NIBBLE_TO_HEX( (uint8_t)(data >> ( 4 * i ) ) & 0x0F );
+    }
+}
+
+void APPEND_TIMESTAMP_TO_BUFFER( char* buffer )
+{
+    uint16_t timesrtamp = xTaskGetTickCount() % 0xEA5F;
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        buffer[ 3 - i ] = NIBBLE_TO_HEX( (uint8_t)( timesrtamp >> ( 4 * i ) ) & 0x0F );
     }
 }
 

@@ -12,4 +12,6 @@ void CAN_SNIFFER_INIT( void );
 void CAN_SNIFFER_START( void );
 void CAN_SNIFFER_STOP( void );
 
+void SET_CAN_SNIFFER_TIMESTAMP_STATE( bool state );
+
 #endif

@@ -62,7 +62,7 @@ void vTask_SERIAL( void* pvParameters )
         int count = usb_serial_jtag_read_bytes( buffer, 64, 0 );
         if ( count == 0 )
         {
-            vTaskDelay( pdMS_TO_TICKS( 5 ) );
+            taskYIELD();
             continue;
         }
 

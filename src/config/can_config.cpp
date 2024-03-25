@@ -5,7 +5,6 @@
 
 static CAN_INTERFACE::STATE_Enum can_state = CAN_INTERFACE::STATE_RESET;
 static CAN_INTERFACE::SPEED_Enum can_speed = CAN_INTERFACE::SPEED_10Kbps;
-static CAN_INTERFACE::MODE_TIMESTAMP_Enum can_timestamp = CAN_INTERFACE::MODE_TIMESTAMP_DISABLE;
 
 static twai_timing_config_t can_timings[ CAN_INTERFACE::SPEED_COUNT ] = {
         TWAI_TIMING_CONFIG_10KBITS(),
@@ -60,15 +59,7 @@ esp_err_t CAN_INTERFACE::SET_MODE_TIMESTAMP( bool state )
        return ESP_FAIL;
     }
 
-    if ( state )
-    {
-        can_timestamp = MODE_TIMESTAMP_ENABLE;
-    }
-    else
-    {
-        can_timestamp = MODE_TIMESTAMP_DISABLE;
-    }
-
+    SET_CAN_SNIFFER_TIMESTAMP_STATE( state );
     return ESP_OK;
 }
 
