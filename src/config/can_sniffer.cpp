@@ -46,6 +46,7 @@ void vTask_CAN_SNIFFER( void* pvParameters )
         twai_message_t message;
         if ( twai_receive( &message, pdMS_TO_TICKS( portMAX_DELAY ) ) == ESP_OK)
         {
+            LED_STROBE();
             PDO_TO_SERIAL( &message );
         }
     }

@@ -34,7 +34,21 @@ esp_err_t CAN_INTERFACE::RESET_CAN( void )
     {
         return ESP_FAIL; 
     }
+
+    can_state = STATE_RESET;
+
     CAN_SNIFFER_STOP();
+
+    if ( twai_stop() == ESP_FAIL )
+    {
+        return ESP_FAIL;
+    }
+
+    if ( twai_driver_uninstall() == ESP_FAIL )
+    {
+        return ESP_FAIL;
+    }
+    
     return ESP_OK;
 }
 

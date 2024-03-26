@@ -7,6 +7,7 @@
 #include <HexChar.h>
 #include "driver/twai.h"
 #include "config/serial_config.h"
+#include "config/led_strobe_config.h"
 
 void CAN_SNIFFER_INIT( void );
 

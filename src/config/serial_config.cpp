@@ -39,7 +39,6 @@ void SERIAL_INIT( void )
     if ( usb_serial_jtag_driver_install( &serial_config ) == ESP_FAIL )
     {
         printf( "Не удалось инициализировать драйвер usb_serial_jtag\r" );
-        SET_LED_STATE( LED_ON );
         return;
     }
     xTaskCreate(
@@ -92,19 +91,7 @@ void vTask_SERIAL( void* pvParameters )
 
 void PARSE_COMMAND( char* command )
 {   
-    // if ( strncmp( command, "LED ON", sizeof( "LED ON" )  - 1 ) == 0 )
-    // {
-    //     SET_LED_STATE( LED_ON );
-    // }
-    // else if ( strncmp( command, "LED OFF", sizeof( "LED OFF" )  - 1 ) == 0 )
-    // {
-    //     SET_LED_STATE( LED_OFF );
-    // }
-    // else if ( strncmp( command, "LED BLINK", sizeof( "LED BLINK" ) - 1 ) == 0 )
-    // {
-    //     SET_LED_STATE( LED_Blink );
-    // }
-
+    LED_STROBE();
     switch ( command[ 0 ] )
     {
     case 'V':   //Чтение версии программного обеспечения и платы
@@ -159,7 +146,8 @@ void SEND_PCB_VERSION( void )
     usb_serial_jtag_write_bytes( "V", 1, portMAX_DELAY );
     usb_serial_jtag_write_bytes( PCB_VERSION, sizeof( PCB_VERSION ) - 1, portMAX_DELAY );
     usb_serial_jtag_write_bytes( FIRMWARE_VERSION_MA, sizeof( FIRMWARE_VERSION_MA ) - 1, portMAX_DELAY );
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );    
+    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY ); 
+
 }
 
 void SEND_FIRMVARE_VERSION( void )

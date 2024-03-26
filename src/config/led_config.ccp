@@ -6,6 +6,9 @@ static volatile LED_State blink_state = LED_ON;
 
 void BLINK_INIT( void )
 {
+    gpio_set_direction( GPIO_NUM_8, GPIO_MODE_OUTPUT );
+    gpio_set_pull_mode( GPIO_NUM_8, GPIO_FLOATING );
+
     xTaskCreate(
         vTask_BLINK,
         "BLINK",
@@ -18,9 +21,6 @@ void BLINK_INIT( void )
 
 void vTask_BLINK( void* pvParameters )
 {
-    gpio_set_direction( GPIO_NUM_8, GPIO_MODE_OUTPUT );
-    gpio_set_pull_mode( GPIO_NUM_8, GPIO_FLOATING );
-    
     for ( ; ;  )
     {
         if ( blink_state == LED_ON )

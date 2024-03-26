@@ -2,27 +2,25 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "config/led_config.ccp"
+//#include "config/led_config.ccp"
+#include "config/led_strobe_config.h"
 #include "config/can_sniffer.h"
 #include "config/serial_config.h"
 
 extern "C" void app_main() 
 {
-    vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+    vTaskDelay( pdMS_TO_TICKS( 2000 ) );
     printf( "Start CAN Hacker\n" );
 
-    BLINK_INIT();
+    LED_STROBE_INIT();
     CAN_SNIFFER_INIT();
     SERIAL_INIT();
 
-    SET_LED_STATE( LED_Blink );
+    LED_STROBE();
 
     vTaskSuspend( NULL );
 
-    while( 1 )
-    {
-        //vTaskDelay( pdMS_TO_TICKS( 100 ) );
-    }
+    while( 1 );
 }
 
 
