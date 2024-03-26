@@ -10,7 +10,6 @@ static void APPEND_STD_ID_TO_BUFFER( int value, char* buffer );
 static void APPEND_EXT_ID_TO_BUFFER( int value, char* buffer );
 static void APPEND_DATA_TO_BUFFER( uint8_t data, char* buffer );
 static void APPEND_TIMESTAMP_TO_BUFFER( char* buffer );
-static char NIBBLE_TO_HEX( uint8_t nibble );
 
 void CAN_SNIFFER_INIT( void )
 {
@@ -141,18 +140,4 @@ void APPEND_TIMESTAMP_TO_BUFFER( char* buffer )
     {
         buffer[ 3 - i ] = NIBBLE_TO_HEX( (uint8_t)( timesrtamp >> ( 4 * i ) ) & 0x0F );
     }
-}
-
-char NIBBLE_TO_HEX( uint8_t nibble )
-{
-    char ret;
-    if ( nibble <= 9 )
-    {
-        ret = nibble + '0';
-    }
-    else
-    {
-        ret = nibble + 'A' - 10;
-    }
-    return ret;
 }

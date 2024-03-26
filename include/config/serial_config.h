@@ -5,6 +5,7 @@
 #include "driver/usb_serial_jtag.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <HexChar.h>
 
 void SERIAL_INIT( void );
 

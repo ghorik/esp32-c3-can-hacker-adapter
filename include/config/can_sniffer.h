@@ -4,6 +4,7 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <HexChar.h>
 #include "driver/twai.h"
 #include "config/serial_config.h"
 

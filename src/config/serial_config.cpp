@@ -29,7 +29,6 @@ static esp_err_t READ_STD_ID( char* command, uint32_t* id );
 static esp_err_t READ_EX_ID( char* command, uint32_t* id );
 static esp_err_t READ_LEN( char* command, uint8_t* len );
 static esp_err_t READ_DATA( char* command, const uint8_t len, uint8_t* data );
-static uint8_t HEX_TO_NIBBLE( char hex );
 
 void SERIAL_INIT( void )
 {
@@ -437,23 +436,4 @@ esp_err_t READ_DATA( char* command, const uint8_t len, uint8_t* data )
     }
 
     return ESP_OK;
-}
-
-uint8_t HEX_TO_NIBBLE( char hex )
-{
-    uint8_t res = 0;
-    if ( hex >= '0' && hex <= '9' )
-    {
-        res = hex - '0';
-    }
-    else if ( hex >= 'A' && hex <= 'F' )
-    {
-        res = 10 + hex - 'A';
-    }
-    else if ( hex >= 'a' && hex <= 'f' )
-    {
-        res = 10 + hex - 'a';
-    }
-
-    return res;
 }
