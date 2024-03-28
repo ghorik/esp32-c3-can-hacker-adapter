@@ -9,6 +9,9 @@
 static int len_command = 0;
 static char command[ MAX_LEN_COMMAND ];
 
+static const char ANSWER_OK = '\r';
+static const char ANSWER_ERROR = '\a';
+
 static void vTask_SERIAL( void* pvParameters );
 static void PARSE_COMMAND( char* command );
 
@@ -53,7 +56,6 @@ void SERIAL_INIT( void )
 
 void vTask_SERIAL( void* pvParameters )
 {
-
     for ( ; ; )
     {
         char buffer[ 64 ];
@@ -72,6 +74,10 @@ void vTask_SERIAL( void* pvParameters )
             {
                 case '\r':
                 case '\n':
+                    if ( len_command == 0 )
+                    {
+                        break;
+                    }
                     command[ len_command ] = '\0';
                     PARSE_COMMAND( command );
                     len_command = 0;
@@ -113,10 +119,10 @@ void PARSE_COMMAND( char* command )
         SET_CAN_TIMESTAMP( command[ 1 ] );
         break;
     case 'M':   //Устанавливает код фильтра (Доработать)
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         break;
     case 'm':   //Устанавливает маску фильтра (Доработать)
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         break; 
     case 'L':   //Запускает CAN в режиме только для чтения
         CAN_OPEN_READ_ONLY();
@@ -169,17 +175,17 @@ void RESET_CAN( void )
 {
     if ( CAN_INTERFACE::RESET_CAN() == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void SET_CAN_SPEED( char num_speed )
 {    
     if (  num_speed < '0' && num_speed > '8' )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
@@ -187,11 +193,11 @@ void SET_CAN_SPEED( char num_speed )
 
     if ( CAN_INTERFACE::SET_SPEED( speed ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void SET_CAN_TIMESTAMP( char num_state )
@@ -207,36 +213,36 @@ void SET_CAN_TIMESTAMP( char num_state )
     }
     else
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
     if ( CAN_INTERFACE::SET_MODE_TIMESTAMP( state ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void CAN_OPEN_READ_ONLY( void )
 {
     if ( CAN_INTERFACE::CAN_OPEN( CAN_INTERFACE::MODE_READ_ONLY ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void CAN_OPEN_READ_WRITE( void )
 {
     if ( CAN_INTERFACE::CAN_OPEN( CAN_INTERFACE::MODE_READ_WRITE )  == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void CAN_SEND_RTR( char* command )
@@ -244,7 +250,7 @@ void CAN_SEND_RTR( char* command )
     uint32_t can_id; 
     if ( READ_STD_ID( command, &can_id ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command += 3;
@@ -252,18 +258,18 @@ void CAN_SEND_RTR( char* command )
     uint8_t len;
     if ( READ_LEN( command, &len ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command++;
 
     if ( CAN_INTERFACE::SEND_RTR( can_id, len ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void CAN_SEND_EX_RTR( char* command )
@@ -271,7 +277,7 @@ void CAN_SEND_EX_RTR( char* command )
     uint32_t can_id;
     if ( READ_EX_ID( command, &can_id ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command += 8;
@@ -279,18 +285,18 @@ void CAN_SEND_EX_RTR( char* command )
     uint8_t len;
     if ( READ_LEN( command, &len ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command++;
 
     if ( CAN_INTERFACE::SEND_EX_RTR( can_id, len ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void CAN_SEND_PDO( char* command )
@@ -298,7 +304,7 @@ void CAN_SEND_PDO( char* command )
     uint32_t can_id; 
     if ( READ_STD_ID( command, &can_id ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command += 3;
@@ -306,7 +312,7 @@ void CAN_SEND_PDO( char* command )
     uint8_t len;
     if ( READ_LEN( command, &len ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command++;
@@ -314,17 +320,17 @@ void CAN_SEND_PDO( char* command )
     uint8_t data[ 8 ];
     if ( READ_DATA( command, len, data ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
     if ( CAN_INTERFACE::SEND_PDO( can_id, len, data ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 void CAN_SEND_EX_PDO( char* command )
@@ -332,7 +338,7 @@ void CAN_SEND_EX_PDO( char* command )
     uint32_t can_id;
     if ( READ_EX_ID( command, &can_id ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command += 8;
@@ -340,7 +346,7 @@ void CAN_SEND_EX_PDO( char* command )
     uint8_t len;
     if ( READ_LEN( command, &len ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command++;
@@ -348,17 +354,17 @@ void CAN_SEND_EX_PDO( char* command )
     uint8_t data[ 8 ];
     if ( READ_DATA( command, len, data ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
     if ( CAN_INTERFACE::SEND_PDO( can_id, len, data ) == ESP_FAIL )
     {
-        usb_serial_jtag_write_bytes( "\b", 1, portMAX_DELAY );
+        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
 
-    usb_serial_jtag_write_bytes( "\r", 1, portMAX_DELAY );
+    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
 esp_err_t READ_STD_ID( char* command, uint32_t* id )
