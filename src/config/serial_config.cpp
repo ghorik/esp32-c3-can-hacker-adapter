@@ -2,6 +2,7 @@
 #include "config/serial_config.h"
 #include "config/can_config.h"
 #include "config/led_config.h"
+#include "driver/twai.h"
 #include "version.h"
 #include <string.h>
 
@@ -23,13 +24,10 @@ static void SET_CAN_SPEED( char num_speed );
 static void SET_CAN_TIMESTAMP( char state );
 static void CAN_OPEN_READ_ONLY( void );
 static void CAN_OPEN_READ_WRITE( void );
-static void CAN_SEND_RTR( char* command );
-static void CAN_SEND_EX_RTR( char* command );
-static void CAN_SEND_PDO( char* command );
-static void CAN_SEND_EX_PDO( char* command );
+static void CAN_SEND_MSG( char* command, bool extd, bool rtr );
 
-static esp_err_t READ_STD_ID( char* command, uint32_t* id );
-static esp_err_t READ_EX_ID( char* command, uint32_t* id );
+
+static esp_err_t READ_ID( char* command, uint32_t* id, bool extd );
 static esp_err_t READ_LEN( char* command, uint8_t* len );
 static esp_err_t READ_DATA( char* command, const uint8_t len, uint8_t* data );
 
@@ -131,16 +129,16 @@ void PARSE_COMMAND( char* command )
         CAN_OPEN_READ_WRITE();
         break;
     case 'r':   //Передача стандартного RTR фрейма
-        CAN_SEND_RTR( command + 1 );
+        CAN_SEND_MSG( command + 1, false, true );
         break;
     case 'R':   //Передача расширенного RTR фрейма
-        CAN_SEND_EX_RTR( command + 1 );
+        CAN_SEND_MSG( command + 1, true, true );
         break;
     case 't':   //Передача стандартного CAN фрейма
-        CAN_SEND_PDO( command + 1 );
+        CAN_SEND_MSG( command + 1, false, false );
         break;
     case 'T':   //Передача расширенного CAN фрейма
-        CAN_SEND_EX_PDO( command + 1 );
+        CAN_SEND_MSG( command + 1, true, false );
         break;
     default:
         break;
@@ -245,25 +243,38 @@ void CAN_OPEN_READ_WRITE( void )
     usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
-void CAN_SEND_RTR( char* command )
+void CAN_SEND_MSG( char* command, bool extd, bool rtr )
 {
-    uint32_t can_id; 
-    if ( READ_STD_ID( command, &can_id ) == ESP_FAIL )
+    twai_message_t message;
+    message.extd = extd;
+    message.rtr = rtr;
+
+    message.identifier = 0;
+    if ( READ_ID( command, &message.identifier, extd ) == ESP_FAIL )
     {
         usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
-    command += 3;
+    command += extd ? 8 : 3;
 
-    uint8_t len;
-    if ( READ_LEN( command, &len ) == ESP_FAIL )
+    message.data_length_code = 0;
+    if ( READ_LEN( command, &message.data_length_code ) == ESP_FAIL )
     {
         usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
     }
     command++;
 
-    if ( CAN_INTERFACE::SEND_RTR( can_id, len ) == ESP_FAIL )
+    if ( !rtr )
+    {
+         if ( READ_DATA( command, message.data_length_code, message.data ) == ESP_FAIL )
+        {
+            usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
+            return;
+        }
+    }
+
+    if ( CAN_INTERFACE::SEND_MSG( &message ) == ESP_FAIL )
     {
         usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
         return;
@@ -272,134 +283,27 @@ void CAN_SEND_RTR( char* command )
     usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
 }
 
-void CAN_SEND_EX_RTR( char* command )
+esp_err_t READ_ID( char* command, uint32_t* id, bool extd )
 {
-    uint32_t can_id;
-    if ( READ_EX_ID( command, &can_id ) == ESP_FAIL )
+    int iterate;
+    if ( extd )
     {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
+        iterate = 8;
     }
-    command += 8;
-
-    uint8_t len;
-    if ( READ_LEN( command, &len ) == ESP_FAIL )
+    else
     {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
+        iterate = 3;
     }
-    command++;
-
-    if ( CAN_INTERFACE::SEND_EX_RTR( can_id, len ) == ESP_FAIL )
+    for ( int i = 0; i < iterate; i++ )
     {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-
-    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
-}
-
-void CAN_SEND_PDO( char* command )
-{
-    uint32_t can_id; 
-    if ( READ_STD_ID( command, &can_id ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-    command += 3;
-
-    uint8_t len;
-    if ( READ_LEN( command, &len ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-    command++;
-
-    uint8_t data[ 8 ];
-    if ( READ_DATA( command, len, data ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-
-    if ( CAN_INTERFACE::SEND_PDO( can_id, len, data ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-
-    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
-}
-
-void CAN_SEND_EX_PDO( char* command )
-{
-    uint32_t can_id;
-    if ( READ_EX_ID( command, &can_id ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-    command += 8;
-
-    uint8_t len;
-    if ( READ_LEN( command, &len ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-    command++;
-
-    uint8_t data[ 8 ];
-    if ( READ_DATA( command, len, data ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-
-    if ( CAN_INTERFACE::SEND_PDO( can_id, len, data ) == ESP_FAIL )
-    {
-        usb_serial_jtag_write_bytes( &ANSWER_ERROR, 1, portMAX_DELAY );
-        return;
-    }
-
-    usb_serial_jtag_write_bytes( &ANSWER_OK, 1, portMAX_DELAY );
-}
-
-esp_err_t READ_STD_ID( char* command, uint32_t* id )
-{
-    uint32_t ret = 0;
-
-    for ( int i = 0; i < 3; i++ )
-    {
-        if ( command[ i ] == '\0' )
+         if ( command[ i ] == '\0' )
         {
             return ESP_FAIL;
         }
-        ret <<= 4;
-        ret += HEX_TO_NIBBLE( command[ i ] );
+        *id <<= 4;
+        *id += HEX_TO_NIBBLE( command[ i ] );
     }
 
-    *id = ret;
-    return ESP_OK;
-}
-
-esp_err_t READ_EX_ID( char* command, uint32_t* id )
-{
-     uint32_t ret = 0;
-
-    for ( int i = 0; i < 8; i++ )
-    {
-        if ( command[ i ] == '\0' )
-        {
-            return ESP_FAIL;
-        }
-        ret <<= 4;
-        ret += HEX_TO_NIBBLE( command[ i ] );
-    }
-
-    *id = ret;
     return ESP_OK;
 }
 

@@ -115,74 +115,12 @@ esp_err_t CAN_INTERFACE::CAN_OPEN( const MODE_Enum mode )
     return ESP_OK;
 }
 
-esp_err_t CAN_INTERFACE::SEND_RTR( uint32_t id, uint8_t len )
+esp_err_t CAN_INTERFACE::SEND_MSG( twai_message_t* message )
 {
     if ( GET_STATE() != STATE_OPENED )
     {
         return ESP_FAIL;
     }
 
-    twai_message_t message;
-    message.identifier = id;
-    message.extd = 0;
-    message.rtr = 1;
-    message.data_length_code = len;
-
-    return twai_transmit( &message, pdMS_TO_TICKS( 1000 ) );
-}
-
-esp_err_t CAN_INTERFACE::SEND_EX_RTR( uint32_t id, uint8_t len )
-{
-    if ( GET_STATE() != STATE_OPENED )
-    {
-        return ESP_FAIL;
-    }
-    
-    twai_message_t message;
-    message.identifier = id;
-    message.extd = 1;
-    message.rtr = 1;
-    message.data_length_code = len;
-    
-    return twai_transmit( &message, pdMS_TO_TICKS( 1000 ) );
-}
-
-esp_err_t CAN_INTERFACE::SEND_PDO( uint32_t id, uint8_t len, uint8_t* data )
-{
-    if ( GET_STATE() != STATE_OPENED )
-    {
-        return ESP_FAIL;
-    }
-
-    twai_message_t message;
-    message.identifier = id;
-    message.extd = 0;
-    message.rtr = 0;
-    message.data_length_code = len;
-    for ( int i = 0; i < len; i++ )
-    {
-        message.data[ i ] = data[ i ];
-    }
-
-    return twai_transmit( &message, pdMS_TO_TICKS( 1000 ) );
-}
-
-esp_err_t CAN_INTERFACE::SEND_EX_PDO( uint32_t id, uint8_t len, uint8_t* data )
-{
-    if ( GET_STATE() != STATE_OPENED )
-    {
-        return ESP_FAIL;
-    }
-
-    twai_message_t message;
-    message.identifier = id;
-    message.extd = 1;
-    message.rtr = 0;
-    message.data_length_code = len;
-    for ( int i = 0; i < len; i++ )
-    {
-        message.data[ i ] = data[ i ];
-    }
-
-    return twai_transmit( &message, pdMS_TO_TICKS( 1000 ) );
+    return twai_transmit( message, pdMS_TO_TICKS( 1000 ) );
 }

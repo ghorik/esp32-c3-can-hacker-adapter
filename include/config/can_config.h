@@ -55,10 +55,13 @@ namespace CAN_INTERFACE
     esp_err_t SET_SPEED( const SPEED_Enum speed );
     esp_err_t SET_MODE_TIMESTAMP( bool state );
     esp_err_t CAN_OPEN( const MODE_Enum mode );
-    esp_err_t SEND_RTR( uint32_t id, uint8_t len );
-    esp_err_t SEND_EX_RTR( uint32_t id, uint8_t len );
-    esp_err_t SEND_PDO( uint32_t id, uint8_t len, uint8_t* data );
-    esp_err_t SEND_EX_PDO( uint32_t id, uint8_t len, uint8_t* data );
+    
+    esp_err_t SEND_MSG( twai_message_t* message );
+
+    // esp_err_t SEND_RTR( uint32_t id, uint8_t len );
+    // esp_err_t SEND_EX_RTR( uint32_t id, uint8_t len );
+    // esp_err_t SEND_PDO( uint32_t id, uint8_t len, uint8_t* data );
+    // esp_err_t SEND_EX_PDO( uint32_t id, uint8_t len, uint8_t* data );
 }
 
 #endif
