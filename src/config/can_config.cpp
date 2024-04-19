@@ -1,6 +1,7 @@
 
 #include "config/can_config.h"
 #include "config/can_sniffer.h"
+#include "project_config.h"
 #include <string.h>
 
 static CAN_INTERFACE::STATE_Enum can_state = CAN_INTERFACE::STATE_RESET;
@@ -93,7 +94,7 @@ esp_err_t CAN_INTERFACE::CAN_OPEN( const MODE_Enum mode )
         can_mode = TWAI_MODE_NORMAL;
     }
 
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( GPIO_NUM_6, GPIO_NUM_5, can_mode );
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( CAN_CTX_PIN, CAN_CRX_PIN, can_mode );
     twai_timing_config_t t_config;
     memcpy( &t_config, &can_timings[ can_speed ], sizeof( twai_timing_config_t ) );
 
